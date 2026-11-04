@@ -1,0 +1,32 @@
+{
+  "name": "trains",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev:mobile": "vite mobile",
+    "dev:desktop": "vite desktop",
+    "build:mobile": "vite build mobile",
+    "build:desktop": "vite build desktop",
+    "build": "npm run build:mobile && npm run build:desktop && npm run build:site",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build:site": "node -e \"require('fs').copyFileSync('site/index.html', 'dist/index.html')\"",
+    "preview": "vite preview --outDir dist --port 4173"
+  },
+  "dependencies": {
+    "chart.js": "^4.6.1",
+    "idb-keyval": "^6.3.0",
+    "vue": "^3.5.44",
+    "vue-chartjs": "^5.3.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.4",
+    "vite": "^6.4.5",
+    "vite-plugin-pwa": "^1.3.0",
+    "vitest": "^3.2.7"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

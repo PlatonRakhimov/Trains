@@ -1,0 +1,554 @@
+/* Цвета задаём переменными, чтобы тёмная тема меняла только их. */
+:root {
+  --bg: #f3f4f6;
+  --card: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --border: #d1d5db;
+  --primary: #1f6feb;
+  --primary-text: #ffffff;
+  --easy: #15803d;
+  --hard: #c2410c;
+  --danger: #b91c1c;
+  --chip: #e5e7eb;
+  --radius: 14px;
+  /* Минимальный размер того, во что тыкают пальцем. */
+  --tap: 52px;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --border: #30363d;
+    --primary: #2f81f7;
+    --easy: #3fb950;
+    --hard: #f0883e;
+    --danger: #f85149;
+    --chip: #21262d;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Убираем синюю подсветку при тапе на Android. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* ---------- Каркас ---------- */
+
+.screen {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 12px 12px calc(24px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.screen__title {
+  margin: 8px 4px;
+  font-size: 26px;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -12px -12px 0;
+  padding: 8px 12px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar__title {
+  margin: 0;
+  font-size: 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card--action {
+  text-align: left;
+  border-color: var(--primary);
+  gap: 2px;
+}
+
+.card__title {
+  margin: 0;
+  font-size: 18px;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+}
+
+.row > .input {
+  flex: 1;
+}
+
+.row--between {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.label {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.tag {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--primary);
+}
+
+.loading {
+  text-align: center;
+  margin-top: 40vh;
+  color: var(--muted);
+}
+
+.banner {
+  margin: 0;
+  padding: 10px 14px;
+}
+
+.banner--error {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* ---------- Кнопки и поля ---------- */
+
+.btn {
+  min-height: var(--tap);
+  padding: 0 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.btn--primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-text);
+  font-weight: 600;
+}
+
+.btn--big {
+  width: 100%;
+  min-height: 60px;
+  font-size: 18px;
+}
+
+.btn--danger {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: transparent;
+}
+
+.row > .btn {
+  flex: 1;
+}
+
+.row > .btn--icon,
+.btn--icon {
+  flex: 0 0 var(--tap);
+  width: var(--tap);
+  padding: 0;
+  font-size: 20px;
+}
+
+.input {
+  min-height: 48px;
+  width: 100%;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 8px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  text-align: left;
+}
+
+.list-item:last-child {
+  border-bottom: 0;
+}
+
+/* ---------- Чипы (переключатели) ---------- */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  min-height: 46px;
+  padding: 0 16px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--chip);
+}
+
+.chip--active {
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.chip--easy {
+  border-color: var(--easy);
+  color: var(--easy);
+  font-weight: 600;
+}
+
+.chip--hard {
+  border-color: var(--hard);
+  color: var(--hard);
+  font-weight: 600;
+}
+
+/* ---------- Степпер ---------- */
+
+.stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stepper__label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.stepper__row {
+  display: flex;
+  align-items: stretch;
+  height: 60px;
+}
+
+.stepper__btn {
+  flex: 0 0 52px;
+  border: 1px solid var(--border);
+  background: var(--chip);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.stepper__btn:first-child {
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.stepper__btn:last-child {
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.stepper__input {
+  flex: 1;
+  /* width: 0 + flex: 1 — поле занимает остаток места и умеет сжиматься.
+     Без этого у input есть «естественная» ширина ~20 символов, и он распирает карточку. */
+  width: 0;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-left: 0;
+  border-right: 0;
+  background: var(--bg);
+  text-align: center;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.stepper--small .stepper__row {
+  height: 46px;
+}
+
+.stepper--small .stepper__btn {
+  flex-basis: 46px;
+  font-size: 22px;
+}
+
+.stepper--small .stepper__input {
+  width: 56px;
+  flex: 0 0 56px;
+  font-size: 18px;
+}
+
+/* ---------- Карточка упражнения ---------- */
+
+.exercise__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.exercise__head p {
+  margin: 2px 0 0;
+}
+
+.counter {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--chip);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.counter--done {
+  background: var(--easy);
+  color: #fff;
+}
+
+.previous {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--bg);
+  font-size: 14px;
+}
+
+.sets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.set {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  font-weight: 600;
+}
+
+.set--warmup {
+  opacity: 0.6;
+  font-weight: 400;
+}
+
+.set--editing {
+  border-color: var(--primary);
+}
+
+.set__no {
+  margin-right: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.set__flag {
+  margin-left: 4px;
+}
+
+.flag--easy {
+  color: var(--easy);
+}
+
+.flag--hard {
+  color: var(--hard);
+}
+
+.editing-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--primary);
+}
+
+/* Вес и повторы рядом; на совсем узком экране — друг под другом. */
+.input-grid {
+  display: grid;
+  /* minmax(0, 1fr) вместо 1fr — колонки не растягиваются под содержимое. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 360px) {
+  .input-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Редактор программы ---------- */
+
+.hint {
+  margin: 0 4px;
+  font-size: 14px;
+}
+
+.small {
+  font-size: 13px;
+}
+
+.grow,
+.list-item--grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.row--top {
+  align-items: flex-start;
+}
+
+.badge {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--primary-text);
+  font-weight: 700;
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* Пара стрелок ↑↓ столбиком — занимает мало места по ширине. */
+.order-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.btn--mini {
+  min-height: 30px;
+  width: 48px;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.btn--small {
+  min-height: 40px;
+  padding: 0 10px;
+  font-size: 14px;
+}
+
+.toolbar {
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.toolbar > .btn {
+  flex: 1 1 auto;
+}
+
+.editor-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 0 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.checkbox {
+  width: 24px;
+  height: 24px;
+  accent-color: var(--primary);
+}
+
+.stepper--small .stepper__input--wide {
+  flex: 1;
+  width: 0;
+}
+
+/* Длинный список упражнений в поиске прокручивается внутри карточки. */
+.picker__list {
+  display: flex;
+  flex-direction: column;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+/* ---------- Данные / уведомления ---------- */
+
+.card--warn {
+  text-align: left;
+  gap: 2px;
+  border-color: var(--hard);
+  color: var(--text);
+}
+
+.card--warn strong,
+.warn {
+  color: var(--hard);
+}
+
+.warn {
+  margin: 0;
+}
+
+.card p {
+  margin: 0;
+}
+
+.notice {
+  border-color: var(--easy);
+}
+
+.notice--error {
+  border-color: var(--danger);
+  color: var(--danger);
+}

@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+# Свои экспорты с телефона в репозиторий не кладём
+workouts_*.csv
+backup_*.json
+backup_*.json.txt
