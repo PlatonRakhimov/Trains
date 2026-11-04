@@ -1,9 +1,8 @@
 <script setup>
-// План одной тренировки: упражнения, подходы, повторы, вес, заметка.
+// Список упражнений одной тренировки.
 import { ref, computed } from 'vue'
-import { state, findWorkout, moveItem, weightStepFor } from '../store.js'
-import { createPlanItem, weekLabel, workoutCode } from '@shared/schema.js'
-import NumberStepper from '../components/NumberStepper.vue'
+import { state, findWorkout, moveItem } from '../store.js'
+import { createWorkoutItem, weekLabel, workoutCode } from '@shared/schema.js'
 import ExercisePicker from '../components/ExercisePicker.vue'
 
 const props = defineProps({ workoutId: { type: String, required: true } })
@@ -23,40 +22,14 @@ const exerciseName = (id) => state.exercises.find((e) => e.id === id)?.name ?? '
 const adding = ref(false)
 
 function addItem(exercise) {
-  // Новое упражнение получает подходы и повторы как у предыдущего — обычно они похожи.
-  const last = workout.value.items[workout.value.items.length - 1]
-  workout.value.items.push(
-    createPlanItem(exercise.id, last ? { sets: last.sets, reps: last.reps } : undefined),
-  )
+  workout.value.items.push(createWorkoutItem(exercise.id))
   adding.value = false
 }
 
 function removeItem(index) {
-  if (confirm(`Убрать «${exerciseName(workout.value.items[index].exerciseId)}» из плана?`)) {
+  if (confirm(`Убрать «${exerciseName(workout.value.items[index].exerciseId)}» из тренировки?`)) {
     workout.value.items.splice(index, 1)
   }
-}
-
-// ---------- Плановый вес ----------
-// Вес необязательный: пустое поле = null («вес не задан»).
-
-function weightText(item) {
-  return item.weight == null ? '' : String(item.weight)
-}
-
-function setWeight(item, text) {
-  const s = text.trim().replace(',', '.')
-  if (s === '') {
-    item.weight = null
-    return
-  }
-  const n = Number(s)
-  if (Number.isFinite(n) && n >= 0) item.weight = n
-}
-
-function stepWeight(item, delta) {
-  const next = Math.round(((item.weight ?? 0) + delta) * 100) / 100
-  item.weight = next > 0 ? next : null
 }
 </script>
 
@@ -86,31 +59,6 @@ function stepWeight(item, delta) {
         </div>
         <button class="btn btn--icon" aria-label="Убрать упражнение" @click="removeItem(i)">✕</button>
       </div>
-
-      <div class="input-grid">
-        <NumberStepper v-model="item.sets" label="Подходы" :min="1" small />
-        <NumberStepper v-model="item.reps" label="Повторы" :min="1" small />
-      </div>
-
-      <!-- Вес — отдельно: он может быть пустым, а степпер всегда показывает число. -->
-      <div class="stepper stepper--small">
-        <span class="stepper__label">Плановый вес, кг (необязательно)</span>
-        <div class="stepper__row">
-          <button type="button" class="stepper__btn" aria-label="Меньше" @click="stepWeight(item, -weightStepFor(item.exerciseId))">−</button>
-          <input
-            class="stepper__input stepper__input--wide"
-            type="text"
-            inputmode="decimal"
-            placeholder="—"
-            :value="weightText(item)"
-            @input="setWeight(item, $event.target.value)"
-            @blur="$event.target.value = weightText(item)"
-          />
-          <button type="button" class="stepper__btn" aria-label="Больше" @click="stepWeight(item, weightStepFor(item.exerciseId))">+</button>
-        </div>
-      </div>
-
-      <input v-model="item.note" class="input" placeholder="Заметка (например, «пауза внизу»)" />
     </section>
 
     <p v-if="workout.items.length === 0" class="muted hint">В тренировке пока нет упражнений.</p>

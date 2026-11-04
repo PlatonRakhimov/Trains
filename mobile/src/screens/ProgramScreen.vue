@@ -1,7 +1,7 @@
 <script setup>
 // Редактор программы: недели и тренировки в них.
 // Изменения сразу сохраняются и НЕ трогают уже записанные тренировки:
-// в журнале хранится снимок плана на момент записи.
+// в журнале хранится снимок упражнений на момент записи.
 import { computed } from 'vue'
 import { state, moveItem } from '../store.js'
 import { createWeek, createWorkout, newId, weekLabel, workoutLabel, workoutCode } from '@shared/schema.js'
@@ -16,7 +16,7 @@ function addWeek() {
   weeks.value.push(createWeek(weeks.value.length))
 }
 
-// Копия недели с новыми id — удобно, когда недели отличаются только весами и повторами.
+// Копия недели с новыми id — удобно, когда недели содержат похожие упражнения.
 function duplicateWeek(index) {
   const source = weeks.value[index]
   const copy = {

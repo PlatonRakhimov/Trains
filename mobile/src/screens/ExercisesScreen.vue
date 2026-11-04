@@ -66,7 +66,7 @@ function remove(exercise) {
         <button class="list-item" @click="toggle(ex.id)">
           <span>{{ ex.name }}</span>
           <span class="muted small">
-            <template v-if="ex.weightStep">шаг {{ ex.weightStep }} · </template>в плане: {{ usageInProgram(ex.id) }}
+            <template v-if="ex.weightStep">шаг {{ ex.weightStep }} · </template>в программе: {{ usageInProgram(ex.id) }}
           </span>
         </button>
 

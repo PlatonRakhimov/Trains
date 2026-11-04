@@ -84,7 +84,6 @@ const details = computed(() =>
             <th>Тренировка</th>
             <th class="num">Цикл</th>
             <th>Подходы</th>
-            <th>План</th>
             <th class="num">Макс. вес</th>
             <th class="num">1ПМ</th>
             <th class="num">Объём</th>
@@ -97,10 +96,6 @@ const details = computed(() =>
             <td>{{ workoutCode(e.week, e.day) }}<span v-if="e.workoutName" class="muted"> · {{ e.workoutName }}</span></td>
             <td class="num">{{ e.cycle }}</td>
             <td class="mono">{{ formatSets(e.sets) }}</td>
-            <td class="muted">
-              <template v-if="e.plannedReps">{{ e.plannedReps }} повт.<template v-if="e.plannedWeight"> · {{ e.plannedWeight }} кг</template></template>
-              <template v-else>—</template>
-            </td>
             <td class="num">{{ formatNumber(e.maxWeight) }}</td>
             <td class="num">{{ formatNumber(e.best1RM) }}</td>
             <td class="num">{{ formatNumber(e.volume) }}</td>

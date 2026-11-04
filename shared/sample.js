@@ -1,71 +1,51 @@
-// Пример программы для первого запуска: 3 недели × 3 тренировки × 5 упражнений × 5 подходов.
-// Пользователь заменит её своей через редактор.
-import { createExercise, createProgram, createWeek, createWorkout, createPlanItem } from './schema.js'
+// Начальная программа из «Тренировки после 06.09 - Лист1.csv».
+import { createExercise, createProgram, createWeek, createWorkout, createWorkoutItem } from './schema.js'
 
-// Повторы по неделям: лёгкая / средняя / тяжёлая.
-const REPS_BY_WEEK = [8, 6, 4]
+export const PROGRAM_REVISION = 'personal-2026-11-05-confirmed'
 
-// Три разных дня, в каждом по 5 упражнений. Числа — плановый вес для средней недели.
-const DAYS = [
+// Неделя → день → упражнения; пустые ячейки CSV пропущены.
+const WEEKS = [
   [
-    ['Присед со штангой', 80],
-    ['Жим лёжа', 60],
-    ['Тяга штанги в наклоне', 55],
-    ['Выпады с гантелями', 16],
-    ['Планка', null],
+    ['Ручка на лямках 50 мм', 'Большой палец', 'Кисть с упором', 'Отведение — динамика', 'Спина', 'Продавливание резины'],
+    ['Бицепс сидя', 'Жим лёжа', 'Луч', 'Ротация плеча', 'Отработка с резиной', 'Трицепс за столом'],
+    ['Кисть с упором', 'Отведение — динамика', 'Спина', 'Пронатор с пола'],
   ],
   [
-    ['Становая тяга', 100],
-    ['Жим штанги стоя', 40],
-    ['Подтягивания', null],
-    ['Румынская тяга', 70],
-    ['Скручивания', null],
+    ['Ручка на лямках 50 мм', 'Пронатор на блоке', 'Кисть в стол', 'Продавливание резины', 'Бок на блоке'],
+    ['Бицепс сидя', 'Трицепс за столом', 'Луч', 'Спина', 'Отведение — динамика'],
+    ['Пронатор на блоке', 'Кисть в стол', 'Пронатор с пола', 'Большой палец', 'Отработка с резиной'],
   ],
   [
-    ['Фронтальный присед', 60],
-    ['Жим гантелей на наклонной', 22],
-    ['Тяга верхнего блока', 50],
-    ['Жим ногами', 120],
-    ['Подъём штанги на бицепс', 25],
+    ['Бок на ручке тотраза', 'Отведение срыв', 'Пронатор на блоке'],
+    ['Луч срыв', 'Трицепс за столом — лёгкий', 'Спина', 'Большой палец'],
+    ['Кисть в стол', 'Пронатор на блоке', 'Ротация плеча', 'Продавливание резины'],
   ],
 ]
 
-// Лёгкая неделя -10 %, тяжёлая +10 %, округляем до 2.5 кг.
-const WEIGHT_FACTOR = [0.9, 1, 1.1]
-const roundTo = (n, step) => Math.round(n / step) * step
-
-export function createSampleData() {
-  // Справочник: каждое упражнение один раз, дальше ссылки по id.
-  const exercises = []
-  const byName = new Map()
-  for (const day of DAYS) {
-    for (const [name] of day) {
-      if (!byName.has(name)) {
-        const ex = createExercise(name)
-        exercises.push(ex)
-        byName.set(name, ex)
-      }
-    }
-  }
-
+// Передаём существующие данные, чтобы сохранить id справочника и тренировок.
+export function createSampleData(existing = {}) {
+  const exercises = [...(existing.exercises ?? [])]
+  const byName = new Map(exercises.map((ex) => [ex.name, ex]))
   const program = createProgram()
-  REPS_BY_WEEK.forEach((reps, w) => {
+  WEEKS.forEach((days, w) => {
+    const oldWeek = existing.program?.weeks[w]
     const week = createWeek(w)
-    for (const day of DAYS) {
+    if (oldWeek) week.id = oldWeek.id
+    days.forEach((names, d) => {
+      const oldWorkout = oldWeek?.workouts[d]
       const workout = createWorkout()
-      for (const [name, weight] of day) {
-        workout.items.push(
-          createPlanItem(byName.get(name).id, {
-            sets: 5,
-            reps,
-            weight: weight == null ? null : roundTo(weight * WEIGHT_FACTOR[w], 2.5),
-          }),
-        )
+      if (oldWorkout) workout.id = oldWorkout.id
+      for (const name of names) {
+        if (!byName.has(name)) {
+          const exercise = createExercise(name)
+          exercises.push(exercise)
+          byName.set(name, exercise)
+        }
+        workout.items.push(createWorkoutItem(byName.get(name).id))
       }
       week.workouts.push(workout)
-    }
+    })
     program.weeks.push(week)
   })
-
   return { program, exercises }
 }

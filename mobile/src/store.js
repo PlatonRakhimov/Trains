@@ -11,8 +11,8 @@
 
 import { reactive, watch } from 'vue'
 import { get, set } from 'idb-keyval'
-import { createSampleData } from '@shared/sample.js'
-import { DEFAULT_WEIGHT_STEP, createSession, createExercise } from '@shared/schema.js'
+import { createSampleData, PROGRAM_REVISION } from '@shared/sample.js'
+import { DEFAULT_WEIGHT_STEP, createSession, createExercise, removeLegacyPlan } from '@shared/schema.js'
 import { todayISO } from '@shared/date.js'
 
 const KEYS = ['program', 'exercises', 'sessions', 'settings']
@@ -63,11 +63,21 @@ export async function loadState() {
   state.sessions = sessions ?? []
   state.settings = { ...defaultSettings(), ...settings }
 
+  // Применяем программу из CSV один раз; последующие правки пользователя сохраняются.
+  if (state.settings.programRevision !== PROGRAM_REVISION) {
+    const updated = firstRun ? { program: state.program, exercises: state.exercises } : createSampleData(state)
+    state.program = updated.program
+    state.exercises = updated.exercises
+    state.settings.programRevision = PROGRAM_REVISION
+  }
+
+  removeLegacyPlan(state)
+
   // Подписываемся на изменения только ПОСЛЕ загрузки, иначе затёрли бы базу пустыми данными.
   for (const key of KEYS) {
     watch(() => state[key], () => save(key), { deep: true })
   }
-  if (firstRun) await Promise.all(KEYS.map(save))
+  await Promise.all(KEYS.map(save))
 
   state.loaded = true
   requestPersistentStorage()
@@ -93,6 +103,7 @@ export function replaceAllData(backup) {
   state.settings = {
     ...defaultSettings(),
     ...backup.settings,
+    programRevision: PROGRAM_REVISION,
     // Разрешение на постоянное хранение относится к этому телефону, а не к бэкапу.
     persistRequested: state.settings.persistRequested,
     // Восстановленные данные уже есть в файле бэкапа — значит, последний экспорт был в момент его создания.
@@ -174,7 +185,7 @@ export function findWorkout(workoutId) {
   return null
 }
 
-// Сколько раз упражнение встречается в плане программы.
+// Сколько раз упражнение встречается в программе.
 export function usageInProgram(exerciseId) {
   let count = 0
   for (const week of state.program.weeks) {

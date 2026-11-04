@@ -42,7 +42,6 @@ function cycleDate(index) {
       </label>
       <p class="legend">
         Запись <span class="mono">80: 5/5/4</span> — вес и повторы по подходам.
-        <span class="missed-mark">▼</span> — план по повторам не выполнен.
       </p>
     </div>
 
@@ -53,7 +52,6 @@ function cycleDate(index) {
         <thead>
           <tr>
             <th class="sticky">Упражнение</th>
-            <th>План</th>
             <th v-for="(c, i) in table.cycles" :key="c" class="num">
               Цикл {{ c }}
               <div class="muted small">{{ cycleDate(i) }}</div>
@@ -63,19 +61,13 @@ function cycleDate(index) {
         <tbody>
           <tr v-for="row in table.rows" :key="row.exerciseId">
             <th class="sticky">{{ row.exerciseName }}</th>
-            <td class="muted">
-              <template v-if="row.plannedReps">{{ row.plannedReps }} повт.<template v-if="row.plannedWeight"> · {{ row.plannedWeight }} кг</template></template>
-              <template v-else>вне плана</template>
-            </td>
             <td
               v-for="(cell, i) in row.cells"
               :key="i"
               class="mono num"
-              :class="{ 'cell--missed': cell?.missed }"
-              :title="cell ? formatDateRu(cell.date, true) + (cell.missed ? ' · недобор' : '') : ''"
+              :title="cell ? formatDateRu(cell.date, true) : ''"
             >
               <template v-if="cell">
-                <span v-if="cell.missed" class="missed-mark" aria-label="недобор">▼</span>
                 {{ cell.text }}
               </template>
               <span v-else class="muted">—</span>

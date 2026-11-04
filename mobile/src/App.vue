@@ -12,7 +12,7 @@ import DataScreen from './screens/DataScreen.vue'
 //   { name: 'home' }
 //   { name: 'workout', sessionId }        — запись тренировки в зале
 //   { name: 'program' }                   — редактор программы
-//   { name: 'workoutEditor', workoutId }  — план одной тренировки
+//   { name: 'workoutEditor', workoutId }  — упражнения одной тренировки
 //   { name: 'exercises' }                 — справочник упражнений
 //   { name: 'data' }                      — экспорт и восстановление
 const HOME = { name: 'home' }

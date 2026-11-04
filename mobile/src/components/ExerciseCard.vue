@@ -9,20 +9,13 @@ import NumberStepper from './NumberStepper.vue'
 
 const props = defineProps({
   session: { type: Object, required: true },
-  // Упражнение внутри тренировки: { exerciseId, exerciseName, planned, note, sets }
+  active: { type: Boolean, default: false },
+  // Упражнение внутри тренировки: { exerciseId, exerciseName, note, sets }
   item: { type: Object, required: true },
 })
-const emit = defineEmits(['remove'])
+const emit = defineEmits(['remove', 'toggle', 'delete-set'])
 
 const step = computed(() => weightStepFor(props.item.exerciseId))
-
-// ---------- План и прошлый раз ----------
-
-const planText = computed(() => {
-  const p = props.item.planned
-  if (!p) return 'вне плана'
-  return `${p.sets}×${p.reps}` + (p.weight ? ` · ${p.weight} кг` : '')
-})
 
 // Это же упражнение в этой же тренировке прошлого цикла.
 const previous = computed(() => {
@@ -30,8 +23,6 @@ const previous = computed(() => {
   const ex = s?.exercises.find((e) => e.exerciseId === props.item.exerciseId && e.sets.length > 0)
   return ex ? { session: s, exercise: ex } : null
 })
-
-const workCount = computed(() => props.item.sets.filter(isWorkSet).length)
 
 // ---------- Ввод подхода ----------
 
@@ -43,12 +34,11 @@ function suggestedWeight() {
   if (prevWork?.length) return prevWork[0].weight
   const lastWork = lastSetsOfExercise(state.sessions, props.item.exerciseId, props.session.id)?.filter(isWorkSet)
   if (lastWork?.length) return lastWork[0].weight
-  if (props.item.planned?.weight) return props.item.planned.weight
   return props.item.sets[props.item.sets.length - 1]?.weight ?? 0
 }
 
 function suggestedReps() {
-  return props.item.planned?.reps ?? props.item.sets[props.item.sets.length - 1]?.reps ?? 10
+  return props.item.sets[props.item.sets.length - 1]?.reps ?? previous.value?.exercise.sets.filter(isWorkSet)[0]?.reps ?? 10
 }
 
 // Черновик нового подхода. Отдельно от записанных подходов, пока не нажали «+ Подход».
@@ -80,77 +70,89 @@ function startEdit(set) {
 
 function deleteSet() {
   const i = props.item.sets.findIndex((s) => s.id === editingId.value)
-  if (i !== -1) props.item.sets.splice(i, 1)
+  if (i !== -1) emit('delete-set', props.item.sets[i].id)
   editingId.value = null
 }
 </script>
 
 <template>
-  <section class="card exercise">
+  <section class="exercise" :class="{ 'exercise--active': active, 'exercise--recorded': item.sets.length > 0 }">
     <header class="exercise__head">
-      <div>
-        <h2 class="card__title">{{ item.exerciseName }}</h2>
-        <p class="muted">
-          План: {{ planText }}
-          <template v-if="item.planned?.note"> · {{ item.planned.note }}</template>
-        </p>
-      </div>
-      <span class="counter" :class="{ 'counter--done': item.planned && workCount >= item.planned.sets }">
-        {{ workCount }}<template v-if="item.planned">/{{ item.planned.sets }}</template>
-      </span>
+      <h2 class="exercise__heading">
+        <button
+          class="exercise__toggle"
+          :aria-expanded="active"
+          :aria-controls="`exercise-body-${item.id}`"
+          @click="emit('toggle')"
+        >
+          <span aria-hidden="true">{{ active ? '▾' : '▸' }}</span>
+          <span class="exercise__name">{{ item.exerciseName }}</span>
+          <span
+            v-if="previous"
+            class="exercise__previous"
+            :title="`Прошлый цикл (${previous.session.cycle}, ${formatDateRu(previous.session.date)}): ${formatSets(previous.exercise.sets, '×') || '—'}`"
+          >прошлый: {{ formatSets(previous.exercise.sets, '×') || '—' }}</span>
+        </button>
+      </h2>
     </header>
 
-    <p class="previous">
-      <template v-if="previous">
-        Прошлый цикл ({{ previous.session.cycle }}, {{ formatDateRu(previous.session.date) }}):
-        <strong>{{ formatSets(previous.exercise.sets) || '—' }}</strong>
-        <template v-if="previous.exercise.note"> · {{ previous.exercise.note }}</template>
-      </template>
-      <template v-else>В прошлом цикле не делали</template>
-    </p>
-
-    <!-- Записанные подходы. Тап — редактировать. -->
-    <div v-if="item.sets.length" class="sets">
-      <button
-        v-for="(set, i) in item.sets"
-        :key="set.id"
-        class="set"
-        :class="{ 'set--warmup': set.warmup, 'set--editing': set.id === editingId }"
-        @click="startEdit(set)"
-      >
-        <span class="set__no">{{ set.warmup ? 'Р' : i + 1 }}</span>
-        {{ set.weight }}×{{ set.reps }}
-        <span v-if="set.flag" class="set__flag" :class="set.flag === '+' ? 'flag--easy' : 'flag--hard'">{{ set.flag }}</span>
-      </button>
-    </div>
-
-    <p v-if="editing" class="editing-hint">Правка подхода — изменения сохраняются сразу</p>
-
-    <div class="input-grid">
-      <NumberStepper v-model="target.weight" label="Вес, кг" :step="step" />
-      <NumberStepper v-model="target.reps" label="Повторы" />
-    </div>
-
-    <div class="chips">
-      <button class="chip" :class="{ 'chip--easy': target.flag === '+' }" @click="toggleFlag('+')">+ легко</button>
-      <button class="chip" :class="{ 'chip--hard': target.flag === '!' }" @click="toggleFlag('!')">! тяжело</button>
-      <button class="chip" :class="{ 'chip--active': target.warmup }" @click="target.warmup = !target.warmup">
-        разминка
-      </button>
-    </div>
-
-    <template v-if="editing">
-      <input v-model="editing.note" class="input" placeholder="Заметка к подходу" />
-      <div class="row">
-        <button class="btn btn--danger" @click="deleteSet">Удалить подход</button>
-        <button class="btn btn--primary" @click="editingId = null">Готово</button>
+    <!-- Скрываем без размонтирования, чтобы сохранять незаписанный ввод. -->
+    <div v-show="active" :id="`exercise-body-${item.id}`" class="exercise__body">
+      <!-- Записанные подходы. Тап — редактировать. -->
+      <div v-if="item.sets.length" class="sets">
+        <button
+          v-for="(set, i) in item.sets"
+          :key="set.id"
+          class="set"
+          :class="{ 'set--warmup': set.warmup, 'set--editing': set.id === editingId }"
+          :aria-label="`Подход ${i + 1}: ${set.weight} кг, ${set.reps} повторов${set.warmup ? ', разминка' : ''}`"
+          :aria-pressed="set.id === editingId"
+          @click="startEdit(set)"
+        >
+          <span v-if="set.warmup" class="set__no">Р</span>
+          {{ set.weight }}×{{ set.reps }}
+          <span v-if="set.flag" class="set__flag" :class="set.flag === '+' ? 'flag--easy' : 'flag--hard'">{{ set.flag }}</span>
+        </button>
       </div>
-    </template>
-    <button v-else class="btn btn--primary btn--big" @click="addSet">+ Подход</button>
 
-    <div class="row">
-      <input v-model="item.note" class="input" placeholder="Заметка к упражнению" />
-      <button class="btn btn--icon" aria-label="Убрать упражнение" title="Убрать упражнение" @click="emit('remove')">✕</button>
+      <p v-if="editing" class="editing-hint">Правка подхода — изменения сохраняются сразу</p>
+
+      <div class="input-grid exercise-inputs">
+        <NumberStepper v-model="target.weight" label="Вес, кг" :step="step" />
+        <NumberStepper v-model="target.reps" label="Повторы" />
+      </div>
+
+      <details class="exercise-options">
+        <summary class="exercise-options__toggle">Пометки и заметки</summary>
+        <div class="exercise-options__body">
+          <p v-if="previous?.exercise.note" class="muted small">Заметка прошлого цикла: {{ previous.exercise.note }}</p>
+          <div class="chips">
+            <button class="chip" :class="{ 'chip--easy': target.flag === '+' }" @click="toggleFlag('+')">+ легко</button>
+            <button class="chip" :class="{ 'chip--hard': target.flag === '!' }" @click="toggleFlag('!')">! тяжело</button>
+            <button class="chip" :class="{ 'chip--active': target.warmup }" @click="target.warmup = !target.warmup">
+              разминка
+            </button>
+          </div>
+          <label class="field">
+            <span class="label">Заметка к подходу</span>
+            <input v-model="target.note" class="input" placeholder="Заметка к подходу" />
+          </label>
+          <label class="field">
+            <span class="label">Заметка к упражнению</span>
+            <input v-model="item.note" class="input" placeholder="Заметка к упражнению" />
+          </label>
+          <button class="exercise-remove" @click="emit('remove')">Убрать упражнение</button>
+        </div>
+      </details>
+
+      <template v-if="editing">
+        <div class="row">
+          <button class="btn btn--danger" @click="deleteSet">Удалить подход</button>
+          <button class="btn btn--primary" @click="editingId = null">Готово</button>
+        </div>
+      </template>
+      <button v-else class="add-set" @click="addSet">Подход</button>
+
     </div>
   </section>
 </template>

@@ -362,15 +362,6 @@ select.select {
   z-index: 1;
 }
 
-.cell--missed {
-  background: var(--serious-wash);
-}
-
-.missed-mark {
-  color: var(--serious-text);
-  font-size: 11px;
-}
-
 .clickable {
   cursor: pointer;
 }

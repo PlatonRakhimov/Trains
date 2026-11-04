@@ -50,11 +50,9 @@ describe('генерация CSV', () => {
     expect(text).toContain(',102.5,')
   })
 
-  it('пустой план у разового упражнения', () => {
-    const rows = parseWorkoutsCSV(text)
-    const extra = rows.find((r) => r.exerciseId === 'ex_extra')
-    expect(extra.plannedReps).toBeNull()
-    expect(extra.plannedWeight).toBeNull()
+  it('не экспортирует старые поля плана', () => {
+    expect(text).not.toContain('planned_')
+    expect(parseWorkoutsCSV(text)[0]).not.toHaveProperty('plannedReps')
   })
 })
 
@@ -72,8 +70,6 @@ describe('разбор CSV', () => {
       exerciseName: 'Присед',
       weight: 100,
       reps: 5,
-      plannedReps: 5,
-      plannedWeight: 100,
       flag: '+',
       rpe: 8,
       warmup: false,
@@ -106,3 +102,9 @@ describe('разбор CSV', () => {
     expect(parseWorkoutsCSV(rowsToCSV([]))).toEqual([])
   })
 })
+
+ it('читает старый CSV, игнорируя план', () => {
+   const rows = parseWorkoutsCSV('date,exercise_id,weight,reps,planned_reps,planned_weight\n2026-01-01,ex1,80,5,6,85')
+   expect(rows[0]).toMatchObject({ weight: 80, reps: 5 })
+   expect(rows[0]).not.toHaveProperty('plannedReps')
+ })

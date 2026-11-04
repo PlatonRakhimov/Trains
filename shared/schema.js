@@ -2,7 +2,7 @@
 // Здесь нет Vue и браузерных API — этот файл используют оба приложения и тесты.
 
 // Версия формата бэкапа. Увеличиваем, если меняем структуру данных несовместимо.
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 // Шаг кнопок ± для веса, если у упражнения не задан свой.
 export const DEFAULT_WEIGHT_STEP = 2.5
@@ -40,10 +40,9 @@ export function createWorkout() {
   return { id: newId('wo'), name: '', items: [] }
 }
 
-// Одна строка плана: какое упражнение и сколько делать.
-// weight: null — плановый вес не задан.
-export function createPlanItem(exerciseId, { sets = 3, reps = 10, weight = null, note = '' } = {}) {
-  return { id: newId('it'), exerciseId, sets, reps, weight, note }
+// Упражнение в программе: только ссылка на справочник.
+export function createWorkoutItem(exerciseId) {
+  return { id: newId('it'), exerciseId }
 }
 
 // ---------- Лог тренировок ----------
@@ -55,14 +54,12 @@ export function createSet({ weight = 0, reps = 0, warmup = false, flag = '', rpe
 }
 
 // Упражнение внутри записанной тренировки.
-// planned — снимок плана на момент записи (null для разового упражнения).
 // exerciseName — снимок имени, чтобы переименование не меняло старые записи.
-export function createSessionExercise(exercise, planned = null) {
+export function createSessionExercise(exercise) {
   return {
     id: newId('se'),
     exerciseId: exercise.id,
     exerciseName: exercise.name,
-    planned,
     note: '',
     sets: [],
   }
@@ -86,16 +83,9 @@ export function createSession({ program, exercises, weekIndex, dayIndex, cycle, 
     weekName: week.name,
     workoutName: workout.name,
     exercises: workout.items
-      // Если упражнение удалили из справочника, а в плане осталась ссылка — пропускаем.
+      // Если упражнение удалили из справочника, а в программе осталась ссылка — пропускаем.
       .filter((item) => byId.has(item.exerciseId))
-      .map((item) =>
-        createSessionExercise(byId.get(item.exerciseId), {
-          sets: item.sets,
-          reps: item.reps,
-          weight: item.weight,
-          note: item.note,
-        }),
-      ),
+      .map((item) => createSessionExercise(byId.get(item.exerciseId))),
   }
 }
 
@@ -112,4 +102,16 @@ export function workoutLabel(workout, index) {
 // Короткий код тренировки: Н1Д2
 export function workoutCode(weekNo, dayNo) {
   return `Н${weekNo}Д${dayNo}`
+}
+
+// Старые записи сохраняем, удаляя только больше не используемые поля плана.
+export function removeLegacyPlan({ program, sessions }) {
+  for (const week of program.weeks) {
+    for (const workout of week.workouts) {
+      workout.items = workout.items.map(({ id, exerciseId }) => ({ id, exerciseId }))
+    }
+  }
+  for (const session of sessions) {
+    for (const exercise of session.exercises) delete exercise.planned
+  }
 }

@@ -1,5 +1,5 @@
 // Аналитика для десктопа. На вход — строки из parseWorkoutsCSV().
-import { summarizeSets, formatSets, isPlanMissed } from './calc.js'
+import { summarizeSets, formatSets } from './calc.js'
 import { workoutCode } from './schema.js'
 
 // ---------- Фильтр ----------
@@ -33,8 +33,6 @@ export function groupEntries(rows) {
         workoutName: r.workoutName,
         exerciseId: r.exerciseId,
         exerciseName: r.exerciseName,
-        plannedReps: r.plannedReps,
-        plannedWeight: r.plannedWeight,
         sets: [],
       }
       map.set(key, entry)
@@ -98,21 +96,19 @@ export function workoutComparison(rows, week, day) {
   const exerciseOrder = []
   for (const e of [...entries].reverse()) {
     if (!exerciseOrder.some((x) => x.id === e.exerciseId)) {
-      // Перебор идёт с конца, поэтому имя и план — из самой свежей записи.
-      exerciseOrder.push({ id: e.exerciseId, name: e.exerciseName, plannedReps: e.plannedReps, plannedWeight: e.plannedWeight })
+      // Имя — из самой свежей записи.
+      exerciseOrder.push({ id: e.exerciseId, name: e.exerciseName })
     }
   }
 
   const table = exerciseOrder.map((ex) => ({
     exerciseId: ex.id,
     exerciseName: ex.name,
-    plannedReps: ex.plannedReps,
-    plannedWeight: ex.plannedWeight,
     cells: cycles.map((c) => {
       // Если в цикле тренировку делали дважды — показываем последнюю.
       const found = entries.filter((e) => e.exerciseId === ex.id && e.cycle === c).pop()
       if (!found) return null
-      return { text: formatSets(found.sets), missed: isPlanMissed(found.sets, found.plannedReps), date: found.date }
+      return { text: formatSets(found.sets), date: found.date }
     }),
   }))
 
@@ -129,8 +125,7 @@ function byCycle(entries) {
 }
 
 // Ищем проблемы по каждой паре «позиция в цикле + упражнение»
-// (присед в Н1Д1 и присед в Н3Д1 — разные планы, сравнивать их между собой нельзя).
-//   stalled  — плановые повторы не выполнены в двух последних циклах подряд;
+// (присед в Н1Д1 и присед в Н3Д1 — разные нагрузки, сравнивать их между собой нельзя).
 //   noGrowth — рабочий вес не вырос за последние noGrowthCycles циклов.
 export function findProblems(rows, { noGrowthCycles = 3 } = {}) {
   const groups = new Map()
@@ -141,7 +136,6 @@ export function findProblems(rows, { noGrowthCycles = 3 } = {}) {
     groups.get(key).push(e)
   }
 
-  const stalled = []
   const noGrowth = []
 
   for (const list of groups.values()) {
@@ -153,11 +147,6 @@ export function findProblems(rows, { noGrowthCycles = 3 } = {}) {
       week: last.week,
       day: last.day,
       code: workoutCode(last.week, last.day),
-    }
-
-    const [a, b] = history.slice(-2)
-    if (b && b.cycle === a.cycle + 1 && isPlanMissed(a.sets, a.plannedReps) && isPlanMissed(b.sets, b.plannedReps)) {
-      stalled.push({ ...base, cycles: [a.cycle, b.cycle], last: formatSets(b.sets), plannedReps: b.plannedReps })
     }
 
     // Нужно noGrowthCycles циклов: первый — точка отсчёта, дальше вес не превысил её.
@@ -172,5 +161,5 @@ export function findProblems(rows, { noGrowthCycles = 3 } = {}) {
   }
 
   const order = (x, y) => x.week - y.week || x.day - y.day || x.exerciseName.localeCompare(y.exerciseName, 'ru')
-  return { stalled: stalled.sort(order), noGrowth: noGrowth.sort(order) }
+  return { noGrowth: noGrowth.sort(order) }
 }

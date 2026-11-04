@@ -35,7 +35,7 @@ export function round1(n) {
 // Компактная запись подходов: "80: 5/5/4".
 // Если вес менялся — группы через запятую: "80: 5/5, 85: 3".
 // Разминка не показывается.
-export function formatSets(sets) {
+export function formatSets(sets, weightSeparator = ': ') {
   const groups = []
   for (const s of sets.filter(isWorkSet)) {
     const last = groups[groups.length - 1]
@@ -43,7 +43,7 @@ export function formatSets(sets) {
     else groups.push({ weight: s.weight, reps: [s.reps] })
   }
   // Без веса (планка, подтягивания) — только повторы: "8/8/7".
-  return groups.map((g) => (g.weight ? `${g.weight}: ` : '') + g.reps.join('/')).join(', ')
+  return groups.map((g) => (g.weight ? `${g.weight}${weightSeparator}` : '') + g.reps.join('/')).join(', ')
 }
 
 // Число для показа: десятичная точка (как в поле ввода на телефоне), до 0.1,
@@ -54,13 +54,4 @@ export function formatNumber(n) {
   if (Math.abs(r) < 1000) return String(r)
   const [int, frac] = String(r).split('.')
   return int.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0') + (frac ? '.' + frac : '')
-}
-
-// Выполнен ли план по повторам: каждый рабочий подход не меньше плановых повторов.
-// Если плана нет (разовое упражнение) — возвращаем null («не применимо»).
-export function isPlanMissed(sets, plannedReps) {
-  if (plannedReps == null || plannedReps === '') return null
-  const work = sets.filter(isWorkSet)
-  if (work.length === 0) return null
-  return work.some((s) => (s.reps || 0) < plannedReps)
 }

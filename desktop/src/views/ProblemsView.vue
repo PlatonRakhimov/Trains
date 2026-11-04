@@ -1,5 +1,5 @@
 <script setup>
-// Экран «Сводка / проблемы»: застой и отсутствие роста веса.
+// Экран «Сводка / проблемы»: отсутствие роста веса.
 import { computed, ref, watch } from 'vue'
 import { findProblems } from '@shared/analysis.js'
 import { loadPref, savePref } from '../storage.js'
@@ -20,41 +20,10 @@ const open = (p) => emit('open-exercise', p.exerciseId, `${p.week}|${p.day}`)
   <section class="view">
     <div class="tiles">
       <div class="tile">
-        <span class="tile__value">{{ problems.stalled.length }}</span>
-        <span class="tile__label">застой: недобор повторов 2 цикла подряд</span>
-      </div>
-      <div class="tile">
         <span class="tile__value">{{ problems.noGrowth.length }}</span>
         <span class="tile__label">без роста веса за {{ cycles }} цикл(а/ов)</span>
       </div>
     </div>
-
-    <h2 class="h2">Застой</h2>
-    <p class="muted">
-      Плановые повторы не выполнены в двух последних циклах подряд. Сравниваются только одинаковые тренировки (Н1Д1 с
-      Н1Д1), потому что на разных неделях план разный.
-    </p>
-    <p v-if="problems.stalled.length === 0" class="empty">Застоев нет.</p>
-    <table v-else class="table">
-      <thead>
-        <tr>
-          <th>Тренировка</th>
-          <th>Упражнение</th>
-          <th>Циклы</th>
-          <th>Последний результат</th>
-          <th class="num">План, повт.</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="p in problems.stalled" :key="p.code + p.exerciseId" class="clickable" @click="open(p)">
-          <td>{{ p.code }}</td>
-          <td><a href="#" @click.prevent>{{ p.exerciseName }}</a></td>
-          <td>{{ p.cycles.join(', ') }}</td>
-          <td class="mono"><span class="missed-mark">▼</span> {{ p.last }}</td>
-          <td class="num">{{ p.plannedReps }}</td>
-        </tr>
-      </tbody>
-    </table>
 
     <h2 class="h2">Нет роста веса</h2>
     <div class="toolbar">

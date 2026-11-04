@@ -1,5 +1,5 @@
 // Полный бэкап в JSON: программа, справочник, лог, настройки.
-import { SCHEMA_VERSION } from './schema.js'
+import { SCHEMA_VERSION, removeLegacyPlan } from './schema.js'
 
 export function makeBackup({ program, exercises, sessions, settings }) {
   return {
@@ -34,6 +34,8 @@ export function parseBackup(text) {
   if (!data.program || !Array.isArray(data.program.weeks)) throw new Error('В бэкапе нет программы')
   if (!Array.isArray(data.exercises)) throw new Error('В бэкапе нет справочника упражнений')
   if (!Array.isArray(data.sessions)) throw new Error('В бэкапе нет журнала тренировок')
+
+  removeLegacyPlan(data)
 
   return {
     program: data.program,

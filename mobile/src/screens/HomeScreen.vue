@@ -105,12 +105,13 @@ const sessionTitle = (s) => [workoutCode(s.weekNo, s.dayNo), s.weekName, s.worko
       <h2 class="card__title">Новая тренировка</h2>
 
       <p class="label">Неделя</p>
-      <div class="chips">
+      <div class="segments" role="group" aria-label="Неделя">
         <button
           v-for="(week, w) in weeks"
           :key="week.id"
-          class="chip"
-          :class="{ 'chip--active': selected?.weekIndex === w }"
+          class="segment"
+          :class="{ 'segment--active': selected?.weekIndex === w }"
+          :aria-pressed="selected?.weekIndex === w"
           @click="selectWeek(w)"
         >
           {{ w + 1 }}. {{ weekLabel(week, w) }}
@@ -120,12 +121,13 @@ const sessionTitle = (s) => [workoutCode(s.weekNo, s.dayNo), s.weekName, s.worko
       <template v-if="selectedWeek">
         <p class="label">День</p>
         <p v-if="selectedWeek.workouts.length === 0" class="muted">В этой неделе нет тренировок.</p>
-        <div class="chips">
+        <div class="segments" role="group" aria-label="День">
           <button
             v-for="(workout, d) in selectedWeek.workouts"
             :key="workout.id"
-            class="chip"
-            :class="{ 'chip--active': selected.dayIndex === d }"
+            class="segment"
+            :class="{ 'segment--active': selected.dayIndex === d }"
+            :aria-pressed="selected.dayIndex === d"
             @click="selectDay(d)"
           >
             {{ workoutLabel(workout, d) }}
@@ -135,12 +137,8 @@ const sessionTitle = (s) => [workoutCode(s.weekNo, s.dayNo), s.weekName, s.worko
 
       <template v-if="selectedWorkout">
         <div class="row row--between">
-          <div>
-            <strong>{{ workoutCode(selected.weekIndex + 1, selected.dayIndex + 1) }}</strong>
-            <span class="muted"> · упражнений: {{ selectedWorkout.items.length }}</span>
-            <p v-if="isNext" class="tag">следующая по порядку</p>
-          </div>
-          <NumberStepper v-model="cycle" label="Цикл" :min="1" small />
+          <span v-if="isNext" class="muted small">Следующая по порядку</span>
+          <NumberStepper v-model="cycle" class="cycle-picker" label="Цикл" :min="1" small />
         </div>
         <button class="btn btn--primary btn--big" @click="start">Начать</button>
       </template>
