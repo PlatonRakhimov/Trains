@@ -2,11 +2,14 @@
 // Редактор программы: недели и тренировки в них.
 // Изменения сразу сохраняются и НЕ трогают уже записанные тренировки:
 // в журнале хранится снимок упражнений на момент записи.
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { state, moveItem } from '../store.js'
-import { createWeek, createWorkout, newId, weekLabel, workoutLabel, workoutCode } from '@shared/schema.js'
+import { createWeek, createWorkout, newId, weekLabel, workoutLabel } from '@shared/schema.js'
 
 const emit = defineEmits(['back', 'edit-workout', 'exercises'])
+
+const menuWeekId = ref(null)
+const programMenuOpen = ref(false)
 
 const weeks = computed(() => state.program.weeks)
 
@@ -45,12 +48,6 @@ function addWorkout(week) {
   emit('edit-workout', workout.id)
 }
 
-function removeWorkout(week, index) {
-  if (confirm(`Удалить «${workoutLabel(week.workouts[index], index)}»? Записанная история не пострадает.`)) {
-    week.workouts.splice(index, 1)
-  }
-}
-
 // Короткое описание тренировки: первые упражнения через запятую.
 function workoutSummary(workout) {
   if (workout.items.length === 0) return 'пусто'
@@ -61,10 +58,16 @@ function workoutSummary(workout) {
 </script>
 
 <template>
-  <main class="screen">
+  <main class="screen" @click="menuWeekId = null; programMenuOpen = false" @keydown.esc="menuWeekId = null; programMenuOpen = false">
     <header class="topbar">
       <button class="btn btn--icon" aria-label="Назад" @click="emit('back')">←</button>
-      <h1 class="topbar__title">Программа</h1>
+      <h1 class="topbar__title grow">Программа</h1>
+      <div class="workout-menu" @click.stop>
+        <button class="workout-menu__toggle" aria-label="Действия с программой" :aria-expanded="programMenuOpen" aria-controls="program-actions" @click="programMenuOpen = !programMenuOpen; menuWeekId = null">⋮</button>
+        <div v-if="programMenuOpen" id="program-actions" class="workout-menu__panel">
+          <button class="workout-menu__action" @click="addWeek(); programMenuOpen = false">Добавить неделю</button>
+        </div>
+      </div>
     </header>
 
     <p class="muted hint">
@@ -72,44 +75,39 @@ function workoutSummary(workout) {
       тренировки.
     </p>
 
-    <section v-for="(week, w) in weeks" :key="week.id" class="card">
+    <section v-for="(week, w) in weeks" :key="week.id" class="program-week">
       <div class="row">
-        <span class="badge">Н{{ w + 1 }}</span>
-        <input v-model="week.name" class="input" :placeholder="`Неделя ${w + 1}`" aria-label="Название недели" />
+        <input v-model="week.name" class="program-week__name" :placeholder="`Неделя ${w + 1}`" aria-label="Название недели" />
+        <div class="workout-menu" @click.stop>
+          <button class="workout-menu__toggle" :aria-label="`Действия с неделей ${w + 1}`" :aria-expanded="menuWeekId === week.id" :aria-controls="`week-actions-${week.id}`" @click="menuWeekId = menuWeekId === week.id ? null : week.id; programMenuOpen = false">⋮</button>
+          <div v-if="menuWeekId === week.id" :id="`week-actions-${week.id}`" class="workout-menu__panel">
+            <button class="workout-menu__action" @click="menuWeekId = null; addWorkout(week)">Добавить тренировку</button>
+            <button class="workout-menu__action" :disabled="w === 0" @click="moveItem(weeks, w, -1); menuWeekId = null">Переместить выше</button>
+            <button class="workout-menu__action" :disabled="w === weeks.length - 1" @click="moveItem(weeks, w, 1); menuWeekId = null">Переместить ниже</button>
+            <button class="workout-menu__action" @click="duplicateWeek(w); menuWeekId = null">Копировать неделю</button>
+            <button class="workout-menu__action workout-menu__action--danger" @click="removeWeek(w); menuWeekId = null">Удалить неделю</button>
+          </div>
+        </div>
       </div>
 
-      <div v-for="(workout, d) in week.workouts" :key="workout.id" class="row">
+      <div
+        v-for="(workout, d) in week.workouts"
+        :key="workout.id"
+        class="row program-week__day"
+        :class="{ 'program-week__day--no-divider': w < weeks.length - 1 && d === week.workouts.length - 1 }"
+      >
         <button class="list-item list-item--grow" @click="emit('edit-workout', workout.id)">
           <span>
-            <strong>{{ workoutCode(w + 1, d + 1) }} · {{ workoutLabel(workout, d) }}</strong>
+            <strong>{{ workoutLabel(workout, d) }}</strong>
             <br />
             <span class="muted small">{{ workoutSummary(workout) }}</span>
           </span>
           <span class="muted">›</span>
         </button>
-        <div class="order-btns">
-          <button class="btn btn--mini" :disabled="d === 0" aria-label="Выше" @click="moveItem(week.workouts, d, -1)">↑</button>
-          <button
-            class="btn btn--mini"
-            :disabled="d === week.workouts.length - 1"
-            aria-label="Ниже"
-            @click="moveItem(week.workouts, d, 1)"
-          >↓</button>
-        </div>
-        <button class="btn btn--icon" aria-label="Удалить тренировку" @click="removeWorkout(week, d)">✕</button>
       </div>
 
-      <button class="btn" @click="addWorkout(week)">+ Тренировка</button>
-
-      <div class="row toolbar">
-        <button class="btn btn--small" :disabled="w === 0" @click="moveItem(weeks, w, -1)">↑ Неделю выше</button>
-        <button class="btn btn--small" :disabled="w === weeks.length - 1" @click="moveItem(weeks, w, 1)">↓ Ниже</button>
-        <button class="btn btn--small" @click="duplicateWeek(w)">Копия</button>
-        <button class="btn btn--small btn--danger" @click="removeWeek(w)">Удалить</button>
-      </div>
     </section>
 
-    <button class="btn btn--big" @click="addWeek">+ Неделя</button>
-    <button class="btn" @click="emit('exercises')">Справочник упражнений</button>
+    <button class="btn btn--primary program-exercises" @click="emit('exercises')">Справочник упражнений</button>
   </main>
 </template>
