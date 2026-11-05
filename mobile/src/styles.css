@@ -770,6 +770,34 @@ button {
   color: var(--text);
 }
 
+.journal {
+  margin-top: 8px;
+  padding: 0 4px;
+}
+
+.journal > .card__title {
+  margin-bottom: 12px;
+}
+
+.journal__item {
+  width: 100%;
+  min-height: 72px;
+  padding: 12px 4px;
+}
+
+.journal__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.journal__name {
+  font-size: 16px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
 .day-editor__exercise {
   min-height: 64px;
   padding: 6px 4px;
@@ -805,6 +833,7 @@ button {
   padding: 4px;
 }
 
+.btn--soft-border,
 .program-exercises {
   border: 0.5px solid color-mix(in srgb, var(--accent) 35%, var(--primary));
 }

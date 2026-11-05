@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { state, startSession, exportReminderDue, daysSinceExport } from '../store.js'
 import { suggestNext, cycleForManualPick } from '@shared/order.js'
-import { weekLabel, workoutLabel, workoutCode } from '@shared/schema.js'
+import { weekLabel, workoutLabel } from '@shared/schema.js'
 import { todayISO, formatDateRu } from '@shared/date.js'
 import NumberStepper from '../components/NumberStepper.vue'
 
@@ -68,7 +68,19 @@ const todaySession = computed(() => {
 const recent = computed(() => state.sessions.slice(-20).reverse())
 
 const setCount = (session) => session.exercises.reduce((n, e) => n + e.sets.length, 0)
-const sessionTitle = (s) => [workoutCode(s.weekNo, s.dayNo), s.weekName, s.workoutName].filter(Boolean).join(' · ')
+const sessionTitle = (s) => {
+  const day = `день ${s.dayNo}`
+  const week = s.weekName || `Неделя ${s.weekNo}`
+  const name = s.workoutName?.trim()
+  const prefix = name && name.toLowerCase() !== day ? `${name} · ` : ''
+  return `${prefix}${week}, ${day}`
+}
+const setPlural = new Intl.PluralRules('ru')
+function setsLabel(session) {
+  const count = setCount(session)
+  const word = { one: 'подход', few: 'подхода', many: 'подходов', other: 'подхода' }[setPlural.select(count)]
+  return `${count} ${word}`
+}
 </script>
 
 <template>
@@ -140,18 +152,18 @@ const sessionTitle = (s) => [workoutCode(s.weekNo, s.dayNo), s.weekName, s.worko
           <span v-if="isNext" class="muted small">Следующая по порядку</span>
           <NumberStepper v-model="cycle" class="cycle-picker" label="Цикл" :min="1" small />
         </div>
-        <button class="btn btn--primary btn--big" @click="start">Начать</button>
+        <button class="btn btn--primary btn--big btn--soft-border" @click="start">Начать</button>
       </template>
     </section>
 
-    <section v-if="recent.length" class="card">
+    <section v-if="recent.length" class="journal">
       <h2 class="card__title">Журнал</h2>
-      <button v-for="s in recent" :key="s.id" class="list-item" @click="emit('open', s.id)">
-        <span>
-          <strong>{{ sessionTitle(s) }}</strong>
-          <span class="muted"> · ц{{ s.cycle }}</span>
+      <button v-for="s in recent" :key="s.id" class="list-item journal__item" @click="emit('open', s.id)">
+        <span class="journal__text">
+          <strong class="journal__name">{{ sessionTitle(s) }}</strong>
+          <span class="muted small">{{ formatDateRu(s.date, true) }} · цикл {{ s.cycle }} · {{ setsLabel(s) }}</span>
         </span>
-        <span class="muted">{{ formatDateRu(s.date) }} · {{ setCount(s) }} п.</span>
+        <span class="muted" aria-hidden="true">›</span>
       </button>
     </section>
   </main>

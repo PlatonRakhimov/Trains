@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onBeforeUnmount } from 'vue'
 import { findSession, deleteSession } from '../store.js'
-import { createSessionExercise, workoutCode } from '@shared/schema.js'
+import { createSessionExercise } from '@shared/schema.js'
 import ExerciseCard from '../components/ExerciseCard.vue'
 import ExercisePicker from '../components/ExercisePicker.vue'
 
@@ -13,7 +13,7 @@ const session = computed(() => findSession(props.sessionId))
 
 const title = computed(() => {
   const s = session.value
-  return [workoutCode(s.weekNo, s.dayNo), s.weekName, s.workoutName].filter(Boolean).join(' · ')
+  return `${s.weekName || `Неделя ${s.weekNo}`}, день ${s.dayNo}`
 })
 
 // ---------- Разовое упражнение ----------
